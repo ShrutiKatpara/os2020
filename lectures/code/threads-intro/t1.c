@@ -8,6 +8,17 @@
 int max;
 volatile int counter = 0; // shared global variable
 
+void *inthread(void *arg) {
+    char *letter = arg;
+    int i; // stack (private per thread) 
+    printf("%s: begin [addr of i: %p]\n", letter, &i);
+    for (i = 0; i < max; i++) {
+	counter = counter + 1; // shared: only one
+    }
+    printf("%s: done, %d: counter\n", letter, counter);
+    return NULL;
+}
+
 void *mythread(void *arg) {
     char *letter = arg;
     int i; // stack (private per thread) 
@@ -15,7 +26,13 @@ void *mythread(void *arg) {
     for (i = 0; i < max; i++) {
 	counter = counter + 1; // shared: only one
     }
-    printf("%s: done\n", letter);
+    printf("%s: done, %d: counter\n", letter, counter);
+    pthread_t p3;
+    printf("calling C from thread: %s\n",letter);
+    Pthread_create(&p3, NULL, inthread, "C");
+    Pthread_join(p3, NULL);
+    printf("mythread: done %s \n [counter: %d]\n [should: %d]\n", letter, 
+	   counter, max*3);
     return NULL;
 }
                                                                              
@@ -35,7 +52,7 @@ int main(int argc, char *argv[]) {
     Pthread_join(p1, NULL); 
     Pthread_join(p2, NULL); 
     printf("main: done\n [counter: %d]\n [should: %d]\n", 
-	   counter, max*2);
+	   counter, max*4);
     return 0;
 }
 
